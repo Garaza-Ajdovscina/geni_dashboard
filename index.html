@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="sl" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      (function () {
+        /* Temna/svetla skrito — privzeto vedno svetla tema */
+        document.documentElement.setAttribute("data-theme", "light");
+        // try {
+        //   var raw = localStorage.getItem("geni-settings");
+        //   if (raw) {
+        //     var s = JSON.parse(raw);
+        //     if (s.theme === "dark" || s.theme === "light") {
+        //       document.documentElement.setAttribute("data-theme", s.theme);
+        //     }
+        //   } else {
+        //     var t = localStorage.getItem("energy-grid-theme");
+        //     if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+        //   }
+        // } catch (e) {}
+      })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gen-I sistemski operater</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

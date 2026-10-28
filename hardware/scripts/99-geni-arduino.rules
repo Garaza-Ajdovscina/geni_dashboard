@@ -1,0 +1,9 @@
+# Stable symlinks for Gen-I Arduino boards on Raspberry Pi.
+# Adjust ATTRS{idVendor} and ATTRS{idSerial} after:  udevadm info -a -n /dev/ttyACM0
+#
+# Install:
+#   sudo cp 99-geni-arduino.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
+
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idSerial}=="CONTROLS_SERIAL_HERE", SYMLINK+="serial/by-id/usb-GenI-controls"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idSerial}=="PANEL_SERIAL_HERE", SYMLINK+="serial/by-id/usb-GenI-panel"

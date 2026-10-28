@@ -1,0 +1,23 @@
+{
+  "name": "gen-i-grid-game",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:browser": "node scripts/dev-with-browser.mjs",
+    "open": "node scripts/open-browser.mjs",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "preview:browser": "vite preview & sleep 2 && open http://localhost:4173/"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3"
+  },
+  "dependencies": {
+    "@fontsource/nunito-sans": "^5.2.7",
+    "@fontsource/quicksand": "^5.2.10",
+    "chart.js": "^4.4.1"
+  }
+}

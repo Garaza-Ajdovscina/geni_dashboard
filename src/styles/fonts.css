@@ -1,0 +1,11 @@
+/* latin = a–z; latin-ext = č, š, ž — oba sta potrebna, sicer s in š izgledata različno */
+@import "@fontsource/quicksand/latin-400.css";
+@import "@fontsource/quicksand/latin-ext-400.css";
+@import "@fontsource/quicksand/latin-600.css";
+@import "@fontsource/quicksand/latin-ext-600.css";
+@import "@fontsource/quicksand/latin-700.css";
+@import "@fontsource/quicksand/latin-ext-700.css";
+@import "@fontsource/nunito-sans/latin-600.css";
+@import "@fontsource/nunito-sans/latin-ext-600.css";
+@import "@fontsource/nunito-sans/latin-700.css";
+@import "@fontsource/nunito-sans/latin-ext-700.css";

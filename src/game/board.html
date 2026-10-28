@@ -1,0 +1,208 @@
+  <div class="app">
+    <div class="gameplay-display">
+    <header class="status-row">
+      <div class="status-metrics">
+        <div class="weather-item weather-item--time" title="Ura">
+          <span class="icon-wrap" aria-hidden="true">🕐</span>
+          <div class="weather-item-body">
+            <div class="label">Ura</div>
+            <div class="value value--time" id="clock">00:00:00</div>
+          </div>
+        </div>
+        <div class="weather-item weather-item--cloud" title="Oblačnost">
+          <span class="icon-wrap" aria-hidden="true">⛅</span>
+          <div class="weather-item-body">
+            <div class="label">Oblačnost</div>
+            <div class="value value--pct"><span class="value-num" id="sun-pct">0</span><span class="value-suffix">%</span></div>
+          </div>
+          <div class="mini-bar" aria-hidden="true"><span class="sun-bar" id="sun-bar" style="width: 0%"></span></div>
+        </div>
+        <div class="weather-item weather-item--wind" title="Veter">
+          <span class="icon-wrap" aria-hidden="true">💨</span>
+          <div class="weather-item-body">
+            <div class="label">Veter</div>
+            <div class="value value--wind"><span class="value-num" id="wind-kmh">0</span><span class="value-suffix"> km/h</span></div>
+          </div>
+          <div class="mini-bar" aria-hidden="true"><span class="wind-bar" id="wind-bar" style="width: 0%"></span></div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="header-title-block">
+          <h1 class="page-title">Gen-I sistemski operater</h1>
+          <div class="session-stats" aria-live="polite">
+            <span class="session-stat session-stat--imbalance" id="session-stat-imbalance-pct">V rdečem: 0%</span>
+          </div>
+        </div>
+        <div class="header-controls">
+          <!-- Temna/svetla — skrito za zdaj; koda ostane za kasneje
+          <button type="button" class="theme-toggle" id="theme-toggle" title="Preklopi temo">
+            <span class="icon" id="theme-toggle-icon" aria-hidden="true">🌙</span>
+            <span id="theme-toggle-label">Dark</span>
+          </button>
+          -->
+          <button type="button" class="theme-toggle btn-pause-header kb-nav-item" id="btn-pause" title="Premor">
+            <span class="icon pause-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="1.1rem" height="1.1rem" focusable="false">
+                <path fill="currentColor" d="M6 5h3.5v14H6V5zm8.5 0H18v14h-3.5V5z"/>
+              </svg>
+            </span>
+            <span id="btn-pause-label">Premor</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-grid">
+      <svg
+        class="flow-connectors"
+        id="flow-connectors"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      ></svg>
+      <div class="col-left">
+        <div class="obj-card" data-key="house">
+          <div class="big-icon">🏠</div>
+          <div>
+            <div class="name">Gospodinjstva</div>
+            <div class="chart-wrap"><canvas id="chart-house"></canvas></div>
+          </div>
+        </div>
+        <div class="obj-card" data-key="industry">
+          <div class="big-icon">🏭</div>
+          <div>
+            <div class="name">Industrija</div>
+            <div class="chart-wrap"><canvas id="chart-industry"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="center-stack">
+      <section class="flow-cell" aria-label="Energy flow hub">
+        <svg class="flow-hub-gauges" viewBox="0 0 100 100" aria-hidden="true">
+          <g class="flow-gauge flow-gauge--consume">
+            <path class="flow-gauge__track" data-gauge="consume" />
+            <path class="flow-gauge__fill" data-gauge="consume" />
+          </g>
+          <g class="flow-gauge flow-gauge--produce">
+            <path class="flow-gauge__track" data-gauge="produce" />
+            <path class="flow-gauge__fill" data-gauge="produce" />
+          </g>
+          <g class="flow-gauge flow-gauge--battery">
+            <path class="flow-gauge__track" data-gauge="battery" />
+            <path class="flow-gauge__fill" data-gauge="battery" />
+          </g>
+        </svg>
+        <div class="flow-hub-stats" aria-hidden="true">
+          <div class="flow-stat flow-stat--consume" id="flow-consume-pct">0%</div>
+          <div class="flow-stat flow-stat--net" id="flow-net-pct">0%</div>
+          <div class="flow-stat flow-stat--produce" id="flow-produce-pct">0%</div>
+          <div class="flow-stat flow-stat--battery-flow" id="flow-battery-flow-pct">0%</div>
+        </div>
+        <svg
+          id="sankey-svg"
+          viewBox="0 0 600 300"
+          preserveAspectRatio="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        ></svg>
+      </section>
+      <div class="battery-in-center">
+        <div class="obj-card battery-card">
+          <div class="big-icon">🔋</div>
+          <div style="grid-column: 2">
+            <div class="name">Baterija</div>
+            <div class="battery-fill-wrap">
+              <div class="battery-fill-label">
+                <span>Shranjena energija</span>
+                <span id="battery-pct-label">50%</span>
+              </div>
+              <div class="battery-body">
+                <div class="battery-level" id="battery-level"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <div class="col-right">
+        <div class="obj-card" data-key="wind">
+          <div class="big-icon">🌬️</div>
+          <div>
+            <div class="name">Vetrna energija</div>
+            <div class="chart-wrap"><canvas id="chart-wind"></canvas></div>
+          </div>
+        </div>
+        <div class="obj-card" data-key="solar">
+          <div class="big-icon">🔆</div>
+          <div>
+            <div class="name">Sončna energija</div>
+            <div class="chart-wrap"><canvas id="chart-solar"></canvas></div>
+          </div>
+        </div>
+        <div class="obj-card" data-key="gas">
+          <div class="big-icon">🔥</div>
+          <div>
+            <div class="name">Plinska energija</div>
+            <div class="chart-wrap"><canvas id="chart-gas"></canvas></div>
+          </div>
+        </div>
+        <div class="obj-card" data-key="nuclear">
+          <div class="big-icon">⚛️</div>
+          <div>
+            <div class="name">Jedrska energija</div>
+            <div class="chart-wrap"><canvas id="chart-nuclear"></canvas></div>
+          </div>
+        </div>
+        <div class="obj-card" data-key="hydro">
+          <div class="big-icon">💧</div>
+          <div>
+            <div class="name">Hidroelektrarne</div>
+            <div class="chart-wrap"><canvas id="chart-hydro"></canvas></div>
+            <div class="extra-meter" title="Reservoir level"><div id="hydro-reservoir" style="width: 60%; background: linear-gradient(90deg, #4db8d4, #2a8fad)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="gameplay-speed-readout" aria-live="polite">
+      <div class="label">Game speed</div>
+      <div class="value" id="speed-display">1×</div>
+    </div>
+    </div>
+  </div>
+
+  <footer class="bottom-bar">
+    <button type="button" class="speed-box speed-box--control" id="speed-control" title="Placeholder: cycle game speed">
+      <div class="label">Game speed (placeholder)</div>
+      <div class="value" id="speed-control-value">1×</div>
+    </button>
+    <div class="placeholders">
+      <div class="ph-sliders">
+        <div class="ph-slider">
+          <label for="ctrl-nuclear">Jedrska energija</label>
+          <input type="range" id="ctrl-nuclear" min="0" max="100" value="70" />
+        </div>
+        <div class="ph-slider">
+          <label for="ctrl-hydro">Hidroelektrarne</label>
+          <input type="range" id="ctrl-hydro" min="0" max="100" value="50" />
+        </div>
+        <div class="ph-slider">
+          <label for="ctrl-gas">Plinska energija</label>
+          <input type="range" id="ctrl-gas" min="0" max="100" value="40" />
+        </div>
+        <div class="ph-slider">
+          <label for="ctrl-battery-flow">Baterija (hitrost)</label>
+          <input type="range" id="ctrl-battery-flow" min="0" max="100" value="50" />
+        </div>
+      </div>
+      <div class="ph-toggles" role="group" aria-label="Vklop virov">
+        <button type="button" class="ph-toggle is-on" data-control="solar">Sončna</button>
+        <button type="button" class="ph-toggle is-on" data-control="wind">Vetrna</button>
+        <button type="button" class="ph-toggle is-on" data-control="nuclear">Jedrska</button>
+        <button type="button" class="ph-toggle is-on" data-control="hydro">Hidro</button>
+        <button type="button" class="ph-toggle is-on" data-control="gas">Plinska</button>
+      </div>
+      <button type="button" class="ph-battery-mode" id="battery-mode-control">Baterija: Polnjenje</button>
+    </div>
+  </footer>

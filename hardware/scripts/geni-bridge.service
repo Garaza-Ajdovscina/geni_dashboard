@@ -1,0 +1,15 @@
+[Unit]
+Description=Gen-I hardware serial bridge
+After=network.target
+
+[Service]
+Type=simple
+User=__GENI_USER__
+WorkingDirectory=__GENI_ROOT__/hardware
+ExecStart=__GENI_ROOT__/hardware/.venv/bin/python bridge/bridge.py
+Restart=on-failure
+RestartSec=3
+Environment=PYTHONPATH=__GENI_ROOT__/hardware/bridge
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Sončna hiška
+Comment=Zagni energetsko igro Gen-I
+Exec=__GENI_ROOT__/hardware/scripts/start_geni.sh
+Icon=chromium
+Terminal=false
+Categories=Game;Education;
+StartupNotify=true

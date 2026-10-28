@@ -1,0 +1,41 @@
+baud: 115200
+websocket_host: "127.0.0.1"
+websocket_port: 8765
+
+# switches_port → Arduino with ALL 4 pots (A0–A3) + switches + battery
+# buttons_port  → Arduino with panel buttons only
+switches_port: "/dev/ttyUSB0"
+buttons_port: "/dev/ttyUSB1"
+
+debounce_ms: 25
+
+button_names:
+  - UP
+  - DOWN
+  - LEFT
+  - RIGHT
+  - ESC
+  - ENTER
+  - BACKSPACE
+  - SPEED_LEFT
+  - SPEED_RIGHT
+
+# Switches Arduino (stikala board) — momentary buttons
+switches_button_names:
+  - FULLSCREEN
+
+# raw_min/raw_max: turn pot fully both ways once and tune from C,... serial line.
+# invert: true → 100% where knob previously read 0%
+# Physical Arduino channels (firmware A0–A3): nuclear, hydro, gas, batteryFlow
+pot_calibration:
+  nuclear: { raw_min: 0, raw_max: 1023, invert: true }   # A0
+  hydro: { raw_min: 0, raw_max: 1023, invert: true }     # A1
+  gas: { raw_min: 0, raw_max: 1023, invert: true }       # A2
+  batteryFlow: { raw_min: 0, raw_max: 1023, invert: true }  # A3
+
+# Game control ← physical channel (after calibration on raw channel)
+pot_remap:
+  nuclear: hydro         # Jedrska ← A1
+  hydro: batteryFlow     # Hidro ← A3
+  gas: nuclear           # Plinska ← A0
+  batteryFlow: gas       # Baterija ← A2

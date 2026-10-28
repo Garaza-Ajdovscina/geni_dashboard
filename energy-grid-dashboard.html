@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("energy-grid-theme");
+        if (t === "dark" || t === "light") document.documentElement.setAttribute("data-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gen-I sistemski operater</title>
+  <link rel="stylesheet" href="fonts-local.css" />
+  <style>
+    /* Use only [data-theme="light"] so :root does not always match and fight dark mode */
+    [data-theme="light"] {
+      --bg: #e8f4fc;
+      --bg-mid: #dbeaf8;
+      --bg-end: #f0f7ff;
+      --panel: #ffffff;
+      --text: #1a2b3c;
+      --muted: #5a6f80;
+      --sun: #ffc93c;
+      --wind: #6ec1ff;
+      --renew: #3dd68c;
+      --gas: #a8b0b8;
+      --nuclear: #9b7bff;
+      --hydro: #4db8d4;
+      --storage: #ffd54a;
+      --deficit: #ff6b6b;
+      --industry: #ff9f6e;
+      --home: #7ec8e3;
+      --shadow: 0 8px 24px rgba(26, 43, 60, 0.08);
+      --bottom-fade: rgba(255, 255, 255, 0.92);
+      --weather-bg1: #f8fbff;
+      --weather-bg2: #eef6ff;
+      --weather-border: rgba(110, 193, 255, 0.35);
+      --mini-bar-bg: #e0eaf2;
+      --sun-bar-start: #ffe566;
+      --sun-bar-end: var(--sun);
+      --wind-bar-start: #a8dcff;
+      --wind-bar-end: var(--wind);
+      --icon-tile1: #f5f9ff;
+      --icon-tile2: #e8f0fa;
+      --battery-tile1: #fff9e6;
+      --battery-tile2: #ffe9a8;
+      --battery-body-bg1: #f5f0d8;
+      --battery-body-bg2: #ebe4c8;
+      --battery-terminal: #c9b358;
+      --battery-fill-start: #ffe566;
+      --battery-fill-end: var(--storage);
+      --extra-meter-bg: #e8eef4;
+      --ph-bg: #fff;
+      --ph-btn-bg: #f8fbff;
+      --speed-dash: #b8d4ec;
+      --ph-border: #c5d8e8;
+      --sankey-cap: #2a9d5c;
+      --sankey-flow: #1f9e8a;
+      --sankey-flow-anim: rgba(255, 255, 255, 0.78);
+      --flow-anim: rgba(255, 255, 255, 0.5);
+      --radius: 16px;
+      color-scheme: light;
+    }
+
+    [data-theme="dark"] {
+      --bg: #0c1219;
+      --bg-mid: #111a24;
+      --bg-end: #152030;
+      --panel: #1a2533;
+      --text: #e8eef4;
+      --muted: #94a8bc;
+      --shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+      --bottom-fade: rgba(12, 18, 25, 0.94);
+      --weather-bg1: #1e2a3a;
+      --weather-bg2: #152030;
+      --weather-border: rgba(110, 193, 255, 0.22);
+      --mini-bar-bg: #0f1620;
+      --sun-bar-start: #fff59a;
+      --sun-bar-end: #ffb300;
+      --wind-bar-start: #b3e5ff;
+      --wind-bar-end: #29b6f6;
+      --icon-tile1: #243041;
+      --icon-tile2: #1a2533;
+      --battery-tile1: #3a3220;
+      --battery-tile2: #2a2518;
+      --battery-body-bg1: #1c2433;
+      --battery-body-bg2: #141b28;
+      --battery-terminal: #d4b84a;
+      --battery-fill-start: #fff59a;
+      --battery-fill-end: #ffb300;
+      --extra-meter-bg: #2a3545;
+      --ph-bg: #1e2a3a;
+      --ph-btn-bg: #243041;
+      --speed-dash: #3d5a78;
+      --ph-border: #3d5268;
+      --sankey-cap: #3ecf7a;
+      --sankey-flow: #5eead4;
+      --sankey-flow-anim: rgba(255, 255, 255, 0.85);
+      --flow-anim: rgba(255, 255, 255, 0.65);
+      --renew: #4ade8a;
+      --storage: #fcd34d;
+      --deficit: #f87171;
+      --sun: #fcd34d;
+      --wind: #7dd3fc;
+      --gas: #9ca3af;
+      --nuclear: #c4b5fd;
+      --hydro: #5eead4;
+      --home: #7dd3fc;
+      --industry: #fdba74;
+      color-scheme: dark;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Nunito Sans", "Quicksand", system-ui, sans-serif;
+      background: linear-gradient(165deg, var(--bg) 0%, var(--bg-mid) 50%, var(--bg-end) 100%);
+      color: var(--text);
+      overflow-x: hidden;
+      transition: background 0.25s ease, color 0.2s ease;
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 16px 20px 100px;
+    }
+
+    /* —— Top status row —— */
+    .status-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 16px;
+      background: var(--panel);
+      border-radius: var(--radius);
+      padding: 14px 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+
+    .status-row .header-actions {
+      justify-self: end;
+    }
+
+    .clock {
+      font-family: "Quicksand", sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+
+    .weather-strip {
+      display: flex;
+      justify-content: center;
+      gap: 28px;
+      flex-wrap: wrap;
+    }
+
+    .weather-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(135deg, var(--weather-bg1), var(--weather-bg2));
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 2px solid var(--weather-border);
+    }
+
+    .weather-item .icon-wrap {
+      font-size: 1.6rem;
+      line-height: 1;
+    }
+
+    .weather-item .label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .weather-item .value {
+      font-family: "Quicksand", sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .mini-bar {
+      width: 72px;
+      height: 10px;
+      background: var(--mini-bar-bg);
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.12);
+    }
+
+    .mini-bar > span {
+      display: block;
+      height: 100%;
+      border-radius: 6px;
+      transition: width 0.4s ease;
+    }
+
+    .sun-bar {
+      background: linear-gradient(90deg, var(--sun-bar-start), var(--sun-bar-end));
+    }
+
+    .wind-bar {
+      background: linear-gradient(90deg, var(--wind-bar-start), var(--wind-bar-end));
+    }
+
+    [data-theme="dark"] .mini-bar {
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+        inset 0 2px 4px rgba(0, 0, 0, 0.45);
+    }
+
+    [data-theme="dark"] .mini-bar > span {
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        0 0 0 1px rgba(0, 0, 0, 0.35);
+    }
+
+    .page-title {
+      font-family: "Quicksand", sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0;
+      line-height: 1.3;
+      max-width: 16rem;
+      text-align: right;
+    }
+
+    .theme-toggle {
+      font-family: "Quicksand", sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      background: var(--panel);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 999px;
+      box-shadow: var(--shadow);
+      border: 2px solid var(--ph-border);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.15s ease, background 0.2s ease;
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.03);
+    }
+
+    .theme-toggle .icon {
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    /* —— Main layout —— */
+    .main-grid {
+      display: grid;
+      grid-template-columns: minmax(180px, 210px) 1fr minmax(168px, 200px);
+      grid-template-rows: auto;
+      gap: 12px;
+      align-items: start;
+      min-height: 0;
+      position: relative;
+    }
+
+    .flow-connectors {
+      position: absolute;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .flow-connectors path {
+      fill: none;
+      stroke: var(--sankey-flow);
+      stroke-width: 2.25;
+      stroke-linecap: square;
+      stroke-linejoin: miter;
+      opacity: 0.5;
+      vector-effect: non-scaling-stroke;
+    }
+
+    [data-theme="dark"] .flow-connectors path {
+      opacity: 0.58;
+    }
+
+    .col-left {
+      grid-column: 1;
+      grid-row: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .col-right {
+      grid-column: 3;
+      grid-row: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .center-stack {
+      grid-column: 2;
+      grid-row: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      max-width: min(100%, 540px);
+      justify-self: center;
+      margin-top: 128px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .flow-cell {
+      width: 100%;
+      box-sizing: border-box;
+      background: var(--panel);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 0;
+      position: relative;
+    }
+
+    .battery-in-center {
+      width: 100%;
+    }
+
+    .battery-in-center .battery-card {
+      max-width: none;
+      margin: 0;
+    }
+
+    #sankey-svg {
+      width: 100%;
+      height: min(220px, 28vh);
+      max-width: none;
+      margin: 0;
+      display: block;
+      overflow: visible;
+    }
+
+    [data-theme="dark"] #sankey-svg {
+      filter: drop-shadow(0 0 10px rgba(74, 222, 138, 0.22));
+    }
+
+    #flow-main {
+      display: none;
+    }
+
+    #flow-energy {
+      fill: none;
+      stroke-linecap: butt;
+      stroke-linejoin: miter;
+      pointer-events: none;
+    }
+
+    #arrowhead-flow {
+      fill: var(--sankey-flow);
+    }
+
+    /* —— Object + chart cards —— */
+    .obj-card {
+      background: var(--panel);
+      border-radius: 14px;
+      padding: 10px;
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      min-height: 86px;
+      min-width: 0;
+    }
+
+    .col-left .obj-card {
+      min-height: 104px;
+    }
+
+    .obj-card > div:last-child {
+      min-width: 0;
+    }
+
+    .obj-card .big-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      background: linear-gradient(145deg, var(--icon-tile1), var(--icon-tile2));
+    }
+
+    .obj-card .name {
+      font-family: "Quicksand", sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .chart-wrap {
+      position: relative;
+      height: 56px;
+      min-height: 56px;
+      min-width: 0;
+      width: 100%;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    /* Let Chart.js own canvas dimensions; !important breaks internal sizing. */
+    .chart-wrap canvas {
+      display: block;
+      max-width: 100%;
+    }
+
+    [data-theme="dark"] .chart-wrap {
+      background: rgba(0, 0, 0, 0.4);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    .extra-meter {
+      margin-top: 4px;
+      height: 8px;
+      background: var(--extra-meter-bg);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .extra-meter > div {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.35s ease;
+    }
+
+    .battery-card {
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    .battery-card .big-icon {
+      background: linear-gradient(145deg, var(--battery-tile1), var(--battery-tile2));
+    }
+
+    .battery-fill-wrap {
+      margin-top: 6px;
+    }
+
+    .battery-fill-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .battery-body {
+      height: 22px;
+      border: 3px solid var(--battery-terminal);
+      border-radius: 6px;
+      background: repeating-linear-gradient(
+        90deg,
+        var(--battery-body-bg1),
+        var(--battery-body-bg1) 4px,
+        var(--battery-body-bg2) 4px,
+        var(--battery-body-bg2) 8px
+      );
+      position: relative;
+      overflow: hidden;
+    }
+
+    .battery-body::after {
+      content: "";
+      position: absolute;
+      right: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8px;
+      height: 12px;
+      background: var(--battery-terminal);
+      border-radius: 0 3px 3px 0;
+    }
+
+    .battery-level {
+      height: 100%;
+      width: 50%;
+      background: linear-gradient(180deg, var(--battery-fill-start), var(--battery-fill-end));
+      border-radius: 2px;
+      transition: width 1.45s cubic-bezier(0.33, 0.86, 0.33, 1);
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12);
+    }
+
+    [data-theme="dark"] .battery-level {
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.35),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.35),
+        0 0 0 1px rgba(0, 0, 0, 0.35);
+    }
+
+    /* —— Bottom controls area —— */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(180deg, transparent, var(--bottom-fade) 20%);
+      padding: 12px 20px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 16px;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .bottom-bar > * {
+      pointer-events: auto;
+    }
+
+    .speed-box {
+      font-family: "Quicksand", sans-serif;
+      background: var(--panel);
+      padding: 10px 18px;
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+      border: 3px dashed var(--speed-dash);
+    }
+
+    .speed-box .label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .speed-box .value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--hydro);
+    }
+
+    .placeholders {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      opacity: 0.85;
+    }
+
+    .ph-slider {
+      background: var(--ph-bg);
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      border: 2px dashed var(--ph-border);
+      min-width: 140px;
+    }
+
+    .ph-slider input {
+      width: 100%;
+      margin-top: 4px;
+      accent-color: var(--nuclear);
+    }
+
+    .ph-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .ph-btns button {
+      font-family: "Nunito Sans", sans-serif;
+      font-weight: 700;
+      font-size: 0.75rem;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 2px solid var(--ph-border);
+      background: var(--ph-btn-bg);
+      color: var(--muted);
+      cursor: default;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+      }
+      .flow-connectors {
+        display: none !important;
+      }
+      .col-left,
+      .col-right,
+      .center-stack,
+      .flow-cell {
+        grid-column: 1;
+        grid-row: auto;
+      }
+      .center-stack {
+        margin-top: 0;
+      }
+      .col-left,
+      .col-right {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .obj-card {
+        flex: 1 1 140px;
+        min-width: 140px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="status-row">
+      <div class="clock" id="clock">00:00</div>
+      <div class="weather-strip">
+        <div class="weather-item" title="Sunlight">
+          <span class="icon-wrap" aria-hidden="true">☀️</span>
+          <div>
+            <div class="label">Sunlight</div>
+            <div class="value"><span id="sun-pct">0</span>%</div>
+          </div>
+          <div class="mini-bar" aria-hidden="true"><span class="sun-bar" id="sun-bar" style="width: 0%"></span></div>
+        </div>
+        <div class="weather-item" title="Wind">
+          <span class="icon-wrap" aria-hidden="true">💨</span>
+          <div>
+            <div class="label">Wind</div>
+            <div class="value"><span id="wind-pct">0</span>%</div>
+          </div>
+          <div class="mini-bar" aria-hidden="true"><span class="wind-bar" id="wind-bar" style="width: 0%"></span></div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <h1 class="page-title">Gen-I sistemski operater</h1>
+        <button type="button" class="theme-toggle" id="theme-toggle" title="Switch theme">
+          <span class="icon" id="theme-toggle-icon" aria-hidden="true">🌙</span>
+          <span id="theme-toggle-label">Dark</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="main-grid">
+      <svg
+        class="flow-connectors"
+        id="flow-connectors"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      ></svg>
+      <div class="col-left">
+        <div class="obj-card" data-key="house">
+          <div class="big-icon">🏠</div>
+          <div>
+            <div class="name">Households</div>
+            <div class="chart-wrap"><canvas id="chart-house"></canvas></div>
+          </div>
+        </div>
+        <div class="obj-card" data-key="industry">
+          <div class="big-icon">🏭</div>
+          <div>
+            <div class="name">Industry</div>
+            <div class="chart-wrap"><canvas id="chart-industry"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="center-stack">
+      <section class="flow-cell" aria-label="Energy flow diagram">
+        <svg
+          id="sankey-svg"
+          viewBox="0 0 600 300"
+          preserveAspectRatio="none"
+          xmlns="http://www.w3.org/2000/svg"
+          role="img"
+          aria-label="Sankey-style energy flow"
+        >
+          <defs>
+            <linearGradient
+              id="energy-flow-gradient"
+              gradientUnits="userSpaceOnUse"
+              x1="0"
+              y1="0"
+              x2="100"
+              y2="0"
+              spreadMethod="repeat"
+            >
+              <stop offset="0%" id="eg-stop-0" stop-color="#0f766e" />
+              <stop offset="35%" id="eg-stop-1" stop-color="#99f6e4" />
+              <stop offset="50%" id="eg-stop-2" stop-color="#ccfbf1" />
+              <stop offset="65%" id="eg-stop-3" stop-color="#99f6e4" />
+              <stop offset="100%" id="eg-stop-4" stop-color="#0f766e" />
+            </linearGradient>
+          </defs>
+          <path id="flow-main" d="" aria-hidden="true" />
+          <path id="flow-energy" stroke="url(#energy-flow-gradient)" />
+        </svg>
+      </section>
+      <div class="battery-in-center">
+        <div class="obj-card battery-card">
+          <div class="big-icon">🔋</div>
+          <div style="grid-column: 2">
+            <div class="name">Battery</div>
+            <div class="battery-fill-wrap">
+              <div class="battery-fill-label">
+                <span>Stored energy</span>
+                <span id="battery-pct-label">50%</span>
+              </div>
+              <div class="battery-body">
+                <div class="battery-level" id="battery-level"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <div class="col-right">
+        <div class="obj-card" data-key="wind">
+          <div class="big-icon">🌬️</div>
+          <div>
+            <div class="name">Wind</div>
+            <div class="chart-wrap"><canvas id="chart-wind"></canvas></div>
+          </div>
+        </div>
+        <div class="obj-card" data-key="solar">
+          <div class="big-icon">🔆</div>
+          <div>
+            <div class="name">Solar</div>
+            <div class="chart-wrap"><canvas id="chart-solar"></canvas></div>
+          </div>
+        </div>
+        <div class="obj-card" data-key="gas">
+          <div class="big-icon">🔥</div>
+          <div>
+            <div class="name">Gas</div>
+            <div class="chart-wrap"><canvas id="chart-gas"></canvas></div>
+          </div>
+        </div>
+        <div class="obj-card" data-key="nuclear">
+          <div class="big-icon">⚛️</div>
+          <div>
+            <div class="name">Nuclear</div>
+            <div class="chart-wrap"><canvas id="chart-nuclear"></canvas></div>
+          </div>
+        </div>
+        <div class="obj-card" data-key="hydro">
+          <div class="big-icon">💧</div>
+          <div>
+            <div class="name">Hydropower</div>
+            <div class="chart-wrap"><canvas id="chart-hydro"></canvas></div>
+            <div class="extra-meter" title="Reservoir level"><div id="hydro-reservoir" style="width: 60%; background: linear-gradient(90deg, #4db8d4, #2a8fad)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bottom-bar">
+    <div class="speed-box">
+      <div class="label">Game speed</div>
+      <div class="value" id="speed-display">4×</div>
+    </div>
+    <div class="placeholders">
+      <div class="ph-slider">
+        Hydro output (placeholder)
+        <input type="range" min="0" max="100" value="50" disabled />
+      </div>
+      <div class="ph-slider">
+        Gas plant (placeholder)
+        <input type="range" min="0" max="100" value="40" disabled />
+      </div>
+      <div class="ph-slider">
+        Nuclear (placeholder)
+        <input type="range" min="0" max="100" value="70" disabled />
+      </div>
+      <div class="ph-btns">
+        <button type="button" disabled>Charge battery</button>
+        <button type="button" disabled>Discharge</button>
+      </div>
+    </div>
+  </footer>
+
+  <script src="vendor/chart.umd.min.js"></script>
+  <script>
+(function () {
+  "use strict";
+
+  const MAX_POINTS = 14;
+  const state = {
+    speedIndex: 2,
+    speeds: [1, 2, 4, 8, 16],
+    battery: 0.5,
+    hydroReservoir: 0.62,
+    sun: 72,
+    wind: 45,
+    producers: { wind: 0, solar: 0, gas: 0, nuclear: 0, hydro: 0 },
+    consumers: { house: 0, industry: 0 },
+    history: {},
+  };
+
+  const keys = ["wind", "solar", "gas", "nuclear", "house", "industry", "hydro"];
+  keys.forEach((k) => {
+    state.history[k] = Array(MAX_POINTS).fill(0);
+  });
+
+  function rnd(a, b) {
+    return a + Math.random() * (b - a);
+  }
+
+  function clamp(v, lo, hi) {
+    return Math.max(lo, Math.min(hi, v));
+  }
+
+  function pushHistory(key, v) {
+    const h = state.history[key];
+    h.push(v);
+    if (h.length > MAX_POINTS) h.shift();
+  }
+
+  function tickSimulation() {
+    state.sun = clamp(state.sun + rnd(-4, 4), 15, 100);
+    state.wind = clamp(state.wind + rnd(-6, 6), 5, 100);
+
+    const sunFactor = state.sun / 100;
+    const windFactor = state.wind / 100;
+
+    state.producers.wind = 20 + windFactor * 55 + rnd(-3, 3);
+    state.producers.solar = sunFactor * 70 + rnd(-2, 2);
+    state.producers.gas = 25 + rnd(-4, 4);
+    state.producers.nuclear = 58 + rnd(-1, 1);
+    state.producers.hydro = 18 + state.hydroReservoir * 35 + rnd(-2, 2);
+
+    state.consumers.house = 32 + rnd(-4, 4);
+    state.consumers.industry = 48 + rnd(-5, 5);
+
+    const totalGen =
+      state.producers.wind +
+      state.producers.solar +
+      state.producers.gas +
+      state.producers.nuclear +
+      state.producers.hydro;
+    const totalUse = state.consumers.house + state.consumers.industry;
+
+    const imbalance = totalGen - totalUse;
+    const chargeRate = 0.012;
+    if (imbalance > 2) {
+      state.battery = clamp(state.battery + chargeRate * (imbalance / 80), 0, 1);
+      state.hydroReservoir = clamp(state.hydroReservoir + rnd(-0.002, 0.008), 0.2, 1);
+    } else if (imbalance < -2) {
+      const need = -imbalance;
+      const fromBatt = Math.min(need / 120, state.battery * 0.08);
+      state.battery = clamp(state.battery - fromBatt, 0, 1);
+      state.hydroReservoir = clamp(state.hydroReservoir + rnd(-0.006, 0.002), 0.2, 1);
+    } else {
+      state.battery = clamp(state.battery + rnd(-0.003, 0.003), 0, 1);
+    }
+
+    keys.forEach((k) => {
+      if (k === "hydro") pushHistory(k, state.producers.hydro);
+      else if (["house", "industry"].includes(k)) pushHistory(k, state.consumers[k]);
+      else pushHistory(k, state.producers[k]);
+    });
+
+    return { totalGen, totalUse, imbalance };
+  }
+
+  function updateClock() {
+    const d = new Date();
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    document.getElementById("clock").textContent = hh + ":" + mm;
+  }
+
+  function updateWeatherUI() {
+    document.getElementById("sun-pct").textContent = Math.round(state.sun);
+    document.getElementById("wind-pct").textContent = Math.round(state.wind);
+    document.getElementById("sun-bar").style.width = state.sun + "%";
+    document.getElementById("wind-bar").style.width = state.wind + "%";
+  }
+
+  function updateBatteryUI() {
+    const pct = Math.round(state.battery * 100);
+    document.getElementById("battery-pct-label").textContent = pct + "%";
+    document.getElementById("battery-level").style.width = pct + "%";
+    document.getElementById("hydro-reservoir").style.width = state.hydroReservoir * 100 + "%";
+  }
+
+  const chartConfigs = {
+    wind: { color: "#6ec1ff", label: "MW" },
+    solar: { color: "#ffc93c", label: "MW" },
+    gas: { color: "#a8b0b8", label: "MW" },
+    nuclear: { color: "#9b7bff", label: "MW" },
+    house: { color: "#7ec8e3", label: "MW" },
+    industry: { color: "#ff9f6e", label: "MW" },
+    hydro: { color: "#4db8d4", label: "MW" },
+  };
+
+  const charts = {};
+  let chartResizeTimer = null;
+  let flowGradientPeriod = 100;
+
+  function hexToRgba(hex, a) {
+    const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!m) return "rgba(100, 150, 200, " + a + ")";
+    return (
+      "rgba(" +
+      parseInt(m[1], 16) +
+      "," +
+      parseInt(m[2], 16) +
+      "," +
+      parseInt(m[3], 16) +
+      "," +
+      a +
+      ")"
+    );
+  }
+
+  function resizeAllMiniCharts() {
+    keys.forEach(function (k) {
+      const ch = charts[k];
+      const canvas = document.getElementById("chart-" + k);
+      if (!ch || !canvas) return;
+      const wrap = canvas.parentElement;
+      if (!wrap) return;
+      const w = wrap.clientWidth;
+      const h = wrap.clientHeight || 56;
+      if (w > 0) {
+        try {
+          ch.resize(w, h);
+        } catch (e) {}
+      }
+    });
+  }
+
+  function bindChartResizeObservers() {
+    if (typeof ResizeObserver === "undefined") return;
+    keys.forEach(function (k) {
+      const canvas = document.getElementById("chart-" + k);
+      if (!canvas) return;
+      const wrap = canvas.parentElement;
+      if (!wrap) return;
+      var ro = new ResizeObserver(function () {
+        var ch = charts[k];
+        if (!ch) return;
+        var w = wrap.clientWidth;
+        var h = wrap.clientHeight || 56;
+        if (w > 0) {
+          try {
+            ch.resize(w, h);
+          } catch (e) {}
+        }
+      });
+      ro.observe(wrap);
+    });
+  }
+
+  function makeMiniChart(canvasId, key) {
+    const cfg = chartConfigs[key];
+    const col = cfg.color;
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    if (typeof Chart === "undefined") {
+      console.error("Chart.js failed to load (network / blocked script).");
+      return;
+    }
+    const ctx = canvas.getContext("2d");
+    charts[key] = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: state.history[key].map(function (_, i) {
+          return String(i);
+        }),
+        datasets: [
+          {
+            label: cfg.label,
+            data: [...state.history[key]],
+            borderColor: col,
+            backgroundColor: hexToRgba(col, 0.22),
+            fill: true,
+            tension: 0.45,
+            cubicInterpolationMode: "default",
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            borderWidth: 2.5,
+            spanGaps: true,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        devicePixelRatio: Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, 2.5),
+        layout: { padding: { left: 0, right: 0, top: 2, bottom: 0 } },
+        interaction: { mode: "index", intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            enabled: true,
+            displayColors: false,
+          },
+        },
+        scales: {
+          x: {
+            type: "category",
+            display: false,
+            offset: false,
+            grid: { display: false, drawTicks: false, drawBorder: false },
+          },
+          y: {
+            type: "linear",
+            display: false,
+            min: 0,
+            max: 10,
+            grid: { display: false, drawTicks: false, drawBorder: false },
+          },
+        },
+        elements: {
+          line: {
+            borderJoinStyle: "round",
+            capBezierPoints: true,
+          },
+        },
+        animation: { duration: 240 },
+      },
+    });
+  }
+
+  try {
+    keys.forEach(function (k) {
+      makeMiniChart("chart-" + k, k);
+    });
+    bindChartResizeObservers();
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        resizeAllMiniCharts();
+      });
+    });
+  } catch (err) {
+    console.error("Chart init failed (check network / Chart.js):", err);
+  }
+
+  refreshCharts();
+
+  const chartBarColorsDark = {
+    wind: "#7ecbff",
+    solar: "#fcd34d",
+    gas: "#d1d5db",
+    nuclear: "#c4b5fd",
+    house: "#7dd3fc",
+    industry: "#fdba74",
+    hydro: "#5eead4",
+  };
+
+  /**
+   * Tight y-bounds around the history so the curved line uses the chart height
+   * (fixed 0–120 + suggestedMax often squashes real values near the bottom).
+   */
+  function yBoundsForSparkline(vals) {
+    const arr = vals
+      .map(function (v) {
+        return Number(v);
+      })
+      .filter(function (v) {
+        return !isNaN(v) && isFinite(v);
+      });
+    if (arr.length === 0) return { min: 0, max: 10 };
+    var minV = Math.min.apply(null, arr);
+    var maxV = Math.max.apply(null, arr);
+    var span = maxV - minV;
+    var pad;
+    if (span < 1e-6) {
+      pad = Math.max(3, Math.abs(maxV) * 0.06 + 1);
+      var lo = Math.max(0, maxV - pad);
+      var hi = maxV + pad;
+      if (hi <= lo) hi = lo + 6;
+      return { min: lo, max: hi };
+    }
+    var absMax = Math.max(Math.abs(maxV), 1);
+    pad = span * 0.16 + absMax * 0.03;
+    if (pad < 1.2) pad = span * 0.35 + 1;
+    var lo2 = Math.max(0, minV - pad);
+    var hi2 = maxV + pad;
+    if (hi2 <= lo2) hi2 = lo2 + 8;
+    return { min: lo2, max: hi2 };
+  }
+
+  function refreshCharts() {
+    try {
+      keys.forEach((k) => {
+        const ch = charts[k];
+        if (!ch) return;
+        const vals = state.history[k];
+        const b = yBoundsForSparkline(vals);
+        const y = ch.options.scales.y;
+        y.min = b.min;
+        y.max = b.max;
+        delete y.suggestedMin;
+        delete y.suggestedMax;
+        delete y.grace;
+        ch.data.labels = vals.map(function (_, i) {
+          return String(i);
+        });
+        ch.data.datasets[0].data = [...vals];
+        ch.update("none");
+      });
+    } catch (err) {
+      console.warn("refreshCharts:", err);
+    }
+  }
+
+  window.addEventListener("resize", function () {
+    clearTimeout(chartResizeTimer);
+    chartResizeTimer = setTimeout(function () {
+      resizeAllMiniCharts();
+      scheduleConnectorRedraw();
+    }, 120);
+  });
+
+  (function observeMainGrid() {
+    const grid = document.querySelector(".main-grid");
+    if (!grid || typeof ResizeObserver === "undefined") return;
+    var ro = new ResizeObserver(function () {
+      scheduleConnectorRedraw();
+      syncBatteryBottomToProducerBottom();
+      syncLeftColumnToSolar();
+    });
+    ro.observe(grid);
+  })();
+
+  function syncLeftColumnToSolar() {
+    const grid = document.querySelector(".main-grid");
+    const leftCol = document.querySelector(".col-left");
+    const house = document.querySelector('.col-left .obj-card[data-key="house"]');
+    const solar = document.querySelector('.col-right .obj-card[data-key="solar"]');
+    if (!grid || !leftCol || !house || !solar) return;
+    if (window.matchMedia && window.matchMedia("(max-width: 900px)").matches) {
+      leftCol.style.marginTop = "0px";
+      return;
+    }
+    const gRect = grid.getBoundingClientRect();
+    const houseTop = house.getBoundingClientRect().top - gRect.top;
+    const solarTop = solar.getBoundingClientRect().top - gRect.top;
+    leftCol.style.marginTop = Math.round(solarTop - houseTop) + "px";
+  }
+
+  function syncBatteryBottomToProducerBottom() {
+    const grid = document.querySelector(".main-grid");
+    const battWrap = document.querySelector(".battery-in-center");
+    const battCard = document.querySelector(".battery-in-center .obj-card");
+    const lastProd =
+      document.querySelector('.col-right .obj-card[data-key="hydro"]') ||
+      document.querySelector(".col-right .obj-card:last-child");
+    if (!grid || !battWrap || !battCard || !lastProd) return;
+    if (window.matchMedia && window.matchMedia("(max-width: 900px)").matches) {
+      battWrap.style.marginTop = "0px";
+      return;
+    }
+    const gRect = grid.getBoundingClientRect();
+    const targetBottom = lastProd.getBoundingClientRect().bottom - gRect.top;
+    const currentBottom = battCard.getBoundingClientRect().bottom - gRect.top;
+    const delta = targetBottom - currentBottom;
+    battWrap.style.marginTop = Math.round(delta) + "px";
+  }
+
+  function scheduleConnectorRedraw() {
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        syncBatteryBottomToProducerBottom();
+        syncLeftColumnToSolar();
+        requestAnimationFrame(drawFlowConnectors);
+      });
+    });
+  }
+
+  /**
+   * Curved links from producer/consumer cards and battery to the flow diagram (same stroke style).
+   */
+  function drawFlowConnectors() {
+    const svg = document.getElementById("flow-connectors");
+    const grid = document.querySelector(".main-grid");
+    const sankey = document.getElementById("sankey-svg");
+    if (!svg || !grid || !sankey) return;
+    if (window.matchMedia && window.matchMedia("(max-width: 900px)").matches) {
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      return;
+    }
+
+    const gRect = grid.getBoundingClientRect();
+    const w = Math.max(1, Math.round(gRect.width));
+    const h = Math.max(1, Math.round(gRect.height));
+    svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+    svg.setAttribute("width", String(w));
+    svg.setAttribute("height", String(h));
+
+    function toLocal(el) {
+      const r = el.getBoundingClientRect();
+      return {
+        left: r.left - gRect.left,
+        top: r.top - gRect.top,
+        right: r.right - gRect.left,
+        bottom: r.bottom - gRect.top,
+        cx: (r.left + r.right) / 2 - gRect.left,
+        cy: (r.top + r.bottom) / 2 - gRect.top,
+      };
+    }
+
+    const flow = sankey.getBoundingClientRect();
+    const flowLeft = flow.left - gRect.left;
+    const flowRight = flow.right - gRect.left;
+    const flowTop = flow.top - gRect.top;
+    const flowWpx = flow.width;
+    const flowH = flow.height;
+    const flowMidY = flowTop + (128 / 300) * flowH;
+
+    const svgNS = "http://www.w3.org/2000/svg";
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+    function addPath(d) {
+      const p = document.createElementNS(svgNS, "path");
+      p.setAttribute("d", d);
+      svg.appendChild(p);
+    }
+
+    const prodKeys = ["wind", "solar", "gas", "nuclear", "hydro"];
+    prodKeys.forEach(function (key, i) {
+      const card = document.querySelector('.col-right .obj-card[data-key="' + key + '"]');
+      if (!card) return;
+      const c = toLocal(card);
+      const x0 = c.left;
+      const y0 = c.cy;
+      const y1 = flowMidY;
+      const x1 = flowRight;
+      const midx = (x0 + x1) * 0.5;
+      addPath("M " + x0 + " " + y0 + " C " + midx + " " + y0 + ", " + midx + " " + y1 + ", " + x1 + " " + y1);
+    });
+
+    ["house", "industry"].forEach(function (key, i) {
+      const card = document.querySelector('.col-left .obj-card[data-key="' + key + '"]');
+      if (!card) return;
+      const c = toLocal(card);
+      const x0 = c.right;
+      const y0 = c.cy;
+      const y1 = flowMidY;
+      const x1 = flowLeft;
+      const midx = (x0 + x1) * 0.5;
+      addPath("M " + x0 + " " + y0 + " C " + midx + " " + y0 + ", " + midx + " " + y1 + ", " + x1 + " " + y1);
+    });
+
+    const battCard = document.querySelector(".battery-in-center .obj-card");
+    if (battCard) {
+      const c = toLocal(battCard);
+      const bx = flow.left - gRect.left + (300 / 600) * flowWpx;
+      const by = flow.top - gRect.top + (252 / 300) * flow.height;
+      const midy = c.top + (by - c.top) * 0.42;
+      addPath("M " + c.cx + " " + c.top + " C " + c.cx + " " + midy + ", " + bx + " " + midy + ", " + bx + " " + by);
+    }
+  }
+
+  /**
+   * Animated stroke only (no filled band). Paths use the full inner width of the
+   * SVG viewBox (middle box content), minus only half-stroke inset so caps don’t clip.
+   */
+  function updateSankey(totalGen, totalUse, imbalance) {
+    const svg = document.getElementById("sankey-svg");
+    const VB_W = 600;
+    const VB_H = 300;
+    const yMid = 128;
+    const xC = 300;
+    const maxStroke = 36;
+    const minStroke = 8;
+
+    const scale = (v) => minStroke + (clamp(v, 0, 200) / 200) * (maxStroke - minStroke);
+    const flowW = scale(Math.min(totalGen, totalUse, 180));
+    const gap = flowW / 2 + 2;
+
+    const excess = imbalance > 3;
+    const deficit = imbalance < -3;
+
+    const energyPath = document.getElementById("flow-energy");
+
+    const awBase = 12 + flowW * 0.16;
+    const ew = clamp(awBase * 0.78 * 2, 10, 56);
+    const xRight = VB_W;
+    const xLeft = 0;
+
+    let dEnergy = "";
+
+    if (!excess && !deficit) {
+      dEnergy = `M ${xRight} ${yMid} L ${xLeft} ${yMid}`;
+    } else if (excess) {
+      dEnergy = `M ${xRight} ${yMid} L ${xC} ${yMid} L ${xC} ${VB_H} L ${xC} ${yMid} L ${xLeft} ${yMid}`;
+    } else {
+      dEnergy = `M ${xRight} ${yMid} L ${xC} ${yMid} L ${xC} 0 L ${xC} ${yMid} L ${xLeft} ${yMid}`;
+    }
+
+    energyPath.setAttribute("d", dEnergy);
+    energyPath.setAttribute("stroke-width", ew);
+
+    const gradEl = document.getElementById("energy-flow-gradient");
+    if (gradEl) {
+      const period = Math.max(72, Math.round(ew * 7.2));
+      gradEl.setAttribute("x2", String(period));
+      gradEl.setAttribute("x1", "0");
+      flowGradientPeriod = period;
+    }
+
+    const arrowHead = svg.querySelector("#arrowhead-flow");
+    if (arrowHead) arrowHead.remove();
+  }
+
+  function gameTick() {
+    updateClock();
+    const { totalGen, totalUse, imbalance } = tickSimulation();
+    updateWeatherUI();
+    updateBatteryUI();
+    refreshCharts();
+    updateSankey(totalGen, totalUse, imbalance);
+  }
+
+  let timer = null;
+  function schedule() {
+    if (timer) clearInterval(timer);
+    const mult = state.speeds[state.speedIndex];
+    document.getElementById("speed-display").textContent = mult + "×";
+    const ms = Math.max(32, Math.round(1000 / mult));
+    timer = setInterval(gameTick, ms);
+  }
+
+  document.querySelector(".speed-box").style.cursor = "pointer";
+  document.querySelector(".speed-box").title = "Click to change speed";
+  document.querySelector(".speed-box").addEventListener("click", () => {
+    state.speedIndex = (state.speedIndex + 1) % state.speeds.length;
+    schedule();
+  });
+
+  function animLoop() {
+    const grad = document.getElementById("energy-flow-gradient");
+    if (grad) {
+      /* Tile length must match x2 exactly so the pattern loops with no jump. */
+      const tile = Math.max(1, flowGradientPeriod);
+      const pxPerSec = 42;
+      const shift = ((performance.now() / 1000) * pxPerSec) % tile;
+      grad.setAttribute("gradientTransform", "translate(" + -shift + ", 0)");
+    }
+    requestAnimationFrame(animLoop);
+  }
+
+  function applyChartTheme(isDark) {
+    try {
+      const fg = isDark ? "#e8eef4" : "#1a2b3c";
+      const grid = isDark ? "rgba(148,168,188,0.2)" : "rgba(0,0,0,0.06)";
+      keys.forEach((k) => {
+        const ch = charts[k];
+        if (!ch || !ch.options || !ch.options.scales) return;
+        ch.options.plugins = ch.options.plugins || {};
+        ch.options.plugins.tooltip = ch.options.plugins.tooltip || {};
+        ch.options.plugins.tooltip.backgroundColor = isDark ? "#243041" : "rgba(0,0,0,0.8)";
+        ch.options.plugins.tooltip.titleColor = fg;
+        ch.options.plugins.tooltip.bodyColor = fg;
+        if (ch.options.scales.x && ch.options.scales.x.grid) {
+          ch.options.scales.x.grid.color = grid;
+        }
+        if (ch.options.scales.y && ch.options.scales.y.grid) {
+          ch.options.scales.y.grid.color = grid;
+        }
+        const ds = ch.data.datasets[0];
+        const base = isDark ? chartBarColorsDark[k] : chartConfigs[k].color;
+        ds.borderColor = base;
+        ds.backgroundColor = hexToRgba(base, isDark ? 0.32 : 0.2);
+        ds.borderWidth = 2.5;
+        ch.update("none");
+      });
+      resizeAllMiniCharts();
+    } catch (err) {
+      console.warn("applyChartTheme:", err);
+    }
+  }
+
+  function applyEnergyGradientTheme(isDark) {
+    const set = (id, c) => {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute("stop-color", c);
+    };
+    if (isDark) {
+      set("eg-stop-0", "#134e4a");
+      set("eg-stop-1", "#ccfbf1");
+      set("eg-stop-2", "#f0fdfa");
+      set("eg-stop-3", "#ccfbf1");
+      set("eg-stop-4", "#134e4a");
+    } else {
+      set("eg-stop-0", "#0f766e");
+      set("eg-stop-1", "#99f6e4");
+      set("eg-stop-2", "#ccfbf1");
+      set("eg-stop-3", "#99f6e4");
+      set("eg-stop-4", "#0f766e");
+    }
+  }
+
+  function applyTheme(theme) {
+    const t = theme === "dark" ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", t);
+    localStorage.setItem("energy-grid-theme", t);
+    const isDark = t === "dark";
+    const btn = document.getElementById("theme-toggle");
+    const icon = document.getElementById("theme-toggle-icon");
+    const label = document.getElementById("theme-toggle-label");
+    if (btn) {
+      if (icon && label) {
+        if (isDark) {
+          icon.textContent = "☀️";
+          label.textContent = "Light";
+          btn.setAttribute("title", "Switch to light mode");
+          btn.setAttribute("aria-label", "Switch to light mode");
+        } else {
+          icon.textContent = "🌙";
+          label.textContent = "Dark";
+          btn.setAttribute("title", "Switch to dark mode");
+          btn.setAttribute("aria-label", "Switch to dark mode");
+        }
+      }
+    }
+    applyChartTheme(isDark);
+    applyEnergyGradientTheme(isDark);
+  }
+
+  const savedTheme = localStorage.getItem("energy-grid-theme");
+  applyTheme(savedTheme === "dark" ? "dark" : "light");
+
+  (function bindThemeToggle() {
+    const btn = document.getElementById("theme-toggle");
+    if (!btn) {
+      console.warn("Theme toggle button not found.");
+      return;
+    }
+    btn.addEventListener("click", function () {
+      const cur = document.documentElement.getAttribute("data-theme") || "light";
+      applyTheme(cur === "dark" ? "light" : "dark");
+    });
+  })();
+
+  requestAnimationFrame(function () {
+    requestAnimationFrame(function () {
+      resizeAllMiniCharts();
+      gameTick();
+      schedule();
+      scheduleConnectorRedraw();
+    });
+  });
+  requestAnimationFrame(animLoop);
+})();
+  </script>
+</body>
+</html>

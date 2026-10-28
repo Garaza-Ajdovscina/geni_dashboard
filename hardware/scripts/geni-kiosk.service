@@ -1,0 +1,14 @@
+[Unit]
+Description=Gen-I Chromium kiosk
+After=geni-static.service geni-bridge.service graphical.target
+Wants=geni-static.service geni-bridge.service
+
+[Service]
+Type=simple
+User=__GENI_USER__
+Environment=DISPLAY=:0
+ExecStart=/usr/bin/chromium --kiosk --noerrdialogs --disable-infobars --password-store=basic http://127.0.0.1:8080/?hardware=1
+Restart=on-failure
+
+[Install]
+WantedBy=graphical.target

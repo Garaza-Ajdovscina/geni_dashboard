@@ -1,0 +1,9 @@
+node_modules
+dist
+.DS_Store
+hardware/.venv/
+__pycache__/
+*.pyc
+SERVER_CODE/
+SERVER_CODE_FULL/
+*.tar.gz
