@@ -167,7 +167,7 @@ export function tickSimulation(
   state.producers.hydro = controls.hydroOn ? hydroBase * (controls.hydroLevel / 100) : 0;
 
   state.consumers.house = 19 + rnd(-2.4, 2.4);
-  state.consumers.industry = 29 + rnd(-3, 3);
+  state.consumers.industry = 28 + rnd(-3, 3);
 
   if (controls.hydroOn) {
     state.hydroReservoir = clamp(
